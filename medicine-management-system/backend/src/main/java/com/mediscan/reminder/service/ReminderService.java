@@ -6,9 +6,9 @@ import com.mediscan.inventory.repository.InventoryRepository;
 import com.mediscan.inventory.service.InventoryService;
 
 import com.mediscan.medicine.service.MedicineService;
+import com.mediscan.dto.v1.reminder.ReminderRequestDTO;
+import com.mediscan.dto.v1.reminder.ReminderResponseDTO;
 import com.mediscan.reminder.document.Reminder;
-import com.mediscan.reminder.dto.ReminderRequest;
-import com.mediscan.reminder.dto.ReminderResponse;
 import com.mediscan.reminder.repository.ReminderHistoryRepository;
 import com.mediscan.reminder.repository.ReminderRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class ReminderService {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
-    public ReminderResponse createReminder(ReminderRequest request) {
+    public ReminderResponseDTO createReminder(ReminderRequestDTO request) {
         String medicineName = medicineService.getMedicineNameById(request.getMedicineId());
 
         Reminder reminder = Reminder.builder()
@@ -53,13 +53,13 @@ public class ReminderService {
         return toResponse(reminderRepository.save(reminder));
     }
 
-    public List<ReminderResponse> getMyReminders() {
+    public List<ReminderResponseDTO> getMyReminders() {
         return reminderRepository.findByUserId(getCurrentUser()).stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
-    public ReminderResponse markAsTaken(String id) {
+    public ReminderResponseDTO markAsTaken(String id) {
         Reminder reminder = reminderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Reminder not found"));
 
@@ -72,8 +72,8 @@ public class ReminderService {
         return toResponse(reminderRepository.save(reminder));
     }
 
-    private ReminderResponse toResponse(Reminder reminder) {
-        return ReminderResponse.builder()
+    private ReminderResponseDTO toResponse(Reminder reminder) {
+        return ReminderResponseDTO.builder()
                 .id(reminder.getId())
                 .medicineId(reminder.getMedicineId())
                 .medicineName(reminder.getMedicineName())

@@ -1,7 +1,7 @@
 package com.mediscan.inventory.service;
 
-import com.mediscan.inventory.dto.InventoryRequest;
-import com.mediscan.inventory.dto.InventoryResponse;
+import com.mediscan.dto.v1.inventory.InventoryRequestDTO;
+import com.mediscan.dto.v1.inventory.InventoryResponseDTO;
 import com.mediscan.inventory.entity.Inventory;
 import com.mediscan.inventory.entity.InventoryLog;
 import com.mediscan.inventory.entity.LogReason;
@@ -25,14 +25,14 @@ public class InventoryService {
     private final InventoryRepository inventoryRepository;
     private final InventoryLogRepository inventoryLogRepository;
 
-    public List<InventoryResponse> getAllInventories() {
+    public List<InventoryResponseDTO> getAllInventories() {
         return inventoryRepository.findAll().stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public InventoryResponse addOrUpdateInventory(InventoryRequest request) {
+    public InventoryResponseDTO addOrUpdateInventory(InventoryRequestDTO request) {
         Inventory inventory = inventoryRepository.findByMedicineId(request.getMedicineId())
                 .orElse(Inventory.builder()
                         .medicineId(request.getMedicineId())
@@ -47,7 +47,7 @@ public class InventoryService {
     }
 
     @Transactional
-    public InventoryResponse adjustStock(String medicineId, int adjustment) {
+    public InventoryResponseDTO adjustStock(String medicineId, int adjustment) {
         Inventory inventory = inventoryRepository.findByMedicineId(medicineId)
                 .orElseThrow(() -> new RuntimeException("Inventory not found for medicine: " + medicineId));
 
@@ -60,7 +60,7 @@ public class InventoryService {
         return toResponse(inventoryRepository.save(inventory));
     }
 
-    public InventoryResponse getInventoryByMedicineId(String medicineId) {
+    public InventoryResponseDTO getInventoryByMedicineId(String medicineId) {
         Inventory inventory = inventoryRepository.findByMedicineId(medicineId)
                 .orElseThrow(() -> new RuntimeException("Inventory not found"));
         return toResponse(inventory);
@@ -131,8 +131,8 @@ public class InventoryService {
         return savedInventory;
     }
 
-    private InventoryResponse toResponse(Inventory inventory) {
-        return InventoryResponse.builder()
+    private InventoryResponseDTO toResponse(Inventory inventory) {
+        return InventoryResponseDTO.builder()
                 .id(inventory.getId())
                 .medicineId(inventory.getMedicineId())
                 .quantity(inventory.getQuantity())

@@ -4,9 +4,9 @@ import com.mediscan.dto.v1.reminder.DueReminderDTO;
 import com.mediscan.dto.v1.reminder.DueRemindersResponse;
 import com.mediscan.dto.v1.reminder.ReminderActionRequest;
 import com.mediscan.dto.v1.reminder.ReminderActionResponse;
+import com.mediscan.dto.v1.reminder.ReminderRequestDTO;
+import com.mediscan.dto.v1.reminder.ReminderResponseDTO;
 import com.mediscan.notification.service.NotificationScheduler;
-import com.mediscan.reminder.dto.ReminderRequest;
-import com.mediscan.reminder.dto.ReminderResponse;
 import com.mediscan.reminder.service.ReminderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,13 +30,13 @@ public class ReminderController {
     private final NotificationScheduler notificationScheduler;
 
     @PostMapping
-    public ResponseEntity<ReminderResponse> createReminder(
-            @RequestBody @Valid ReminderRequest request) {
+    public ResponseEntity<ReminderResponseDTO> createReminder(
+            @RequestBody @Valid ReminderRequestDTO request) {
         return ResponseEntity.ok(reminderService.createReminder(request));
     }
 
     @GetMapping
-    public ResponseEntity<List<ReminderResponse>> getMyReminders() {
+    public ResponseEntity<List<ReminderResponseDTO>> getMyReminders() {
         return ResponseEntity.ok(reminderService.getMyReminders());
     }
 
@@ -57,7 +57,7 @@ public class ReminderController {
     }
 
     @PatchMapping("/{id}/taken")
-    public ResponseEntity<ReminderResponse> markAsTaken(@PathVariable String id) {
+    public ResponseEntity<ReminderResponseDTO> markAsTaken(@PathVariable String id) {
         return ResponseEntity.ok(reminderService.markAsTaken(id));
     }
 
