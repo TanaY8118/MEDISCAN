@@ -1,4 +1,0 @@
-﻿C:\Users\ampas\OneDrive\Desktop\medicine-management-system\medicine-management-system\backend\src\main\java\com\mediscan\common\advice
-C:\Users\ampas\OneDrive\Desktop\medicine-management-system\medicine-management-system\backend\src\main\java\com\mediscan\common\dto
-C:\Users\ampas\OneDrive\Desktop\medicine-management-system\medicine-management-system\backend\src\main\java\com\mediscan\common\response
-C:\Users\ampas\OneDrive\Desktop\medicine-management-system\medicine-management-system\backend\src\main\java\com\mediscan\common\util

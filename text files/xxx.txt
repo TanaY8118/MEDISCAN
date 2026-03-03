@@ -1,0 +1,84 @@
+Goal-to-Reality Alignment Audit: MediScan Secure
+
+PART 1 — GOAL EXTRACTION (SOURCE OF TRUTH)
+
+Authoritative Project Goal (Frozen)
+MediScan Secure is a secure, mobile-first medication adherence and inventory system designed to solve the problem of dose failures (missed, duplicate, or forgotten) through assisted data capture and privacy-first architecture. It minimizes user effort by using OCR-based prescription scanning as an assistive input helper, while guaranteeing data integrity through immutable audit trails and consistent inventory tracking. The system is strictly assistive, requiring mandatory human confirmation for all extracted data, and prioritizes data security and mobile reliability over platform breadth or diagnostic complexity.
+
+* Core problem being solved: Medication adherence failures (missed/duplicate doses) and high friction in manual medicine logging.
+* Non-negotiable objectives: Adherence failure reduction, minimized entry effort, guaranteed data correctness, health data protection (privacy), and mobile reliability.
+* Explicitly included features: Secure JWT/Biometric Auth, OCR-based Prescription Scanning (assistive), Smart Reminders (idempotent), Inventory Management (atomic), Low Stock Alerts, Read-only Caregiver sharing, Immutable Audit History.
+* Explicitly excluded features: Medical diagnosis, drug recommendations, wearable integration, analytics dashboards/insights, barcode scanning, predictive refills, and auto-saving of OCR output.
+* Intended user: Patient-centric, mobile-only usage with a high expectation of privacy and safety over convenience.
+
+---
+
+PART 2 — CURRENT STATE SNAPSHOT
+
+Area | Status | Evidence (Files / Modules)
+Authentication | Fully production-ready | AuthService.java, JwtUtil.java
+Inventory | Fully production-ready | InventoryService.java (Atomic updates with mandatory logging)
+Reminders | Fully production-ready | ReminderService.java (Cross-DB coordination, Idempotency)
+History/Timeline | Fully production-ready | HistoryService.java (Aggregate timeline from SQL/NoSQL)
+Medicine Info | Partially aligned | MedicineService.java (Contains barcode fields which are excluded)
+OCR Scanning | Mock / Placeholder | ScanService.java (Only mock responses for "Aspirin")
+Group Sharing | Partially implemented | GroupService.java (Minimal, owner-only implementation)
+Security Gate | Partially aligned | NotificationScheduler.java (Contains a CRITICAL cross-tenant leak)
+
+---
+
+PART 3 — ALIGNMENT MATRIX (MOST IMPORTANT)
+
+Goal from GOALMDSCN.txt | Current Implementation | Alignment Level
+Reduce Adherence Failures | Reminders and History modules fully support adherence loops. | Fully aligned
+Minimize Effort (OCR) | ScanService is a mock; provides no real effort reduction yet. | Not implemented
+Guarantee Data Correctness | InventoryService enforces atomic quantity updates and logs. | Fully aligned
+Protect Sensitive Data | JWT is implemented, but scheduler leaks other users' inventory. | Partially aligned
+OCR Scan ONLY | Codebase contains Barcode scanning logic. | Deviated (Drift)
+Mandatory Confirmation | Implemented on paper; Scan module currently auto-returns mock. | Partially aligned
+
+Deviations & Explanations:
+1. Barcode Scanning Support: ScanService.java contains processBarcode and a barcodeLookup map. This is a Scope Creep / Architectural Drift. The goal explicitly states: "The system does NOT: Scan barcodes."
+2. Cross-Tenant Leak: NotificationScheduler.checkLowStockAlerts ignores the userId filter. This is an Architectural Drift that violates the "Privacy-first" objective.
+3. Mocked OCR: ScanService returns hardcoded data. This is an Acceptable MVP Compromise for foundation building, but now represents Technical Debt that stops the project from reaching its core goal.
+
+---
+
+PART 4 — PROGRESS LEVEL ASSESSMENT
+
+* Current Phase: Core Feature Complete (The adherence engine is solid, but the input path is broken/mocked).
+* Percentage completion: 75%. The backend "brains" (Inventory, History, Reminders) are production-grade. The "eyes" (OCR) are non-existent.
+* What is functionally usable today? A user can register, manually add meds, set reminders, record intake, and see their inventory decrease.
+* What is still missing to satisfy the original goal? Real OCR integration (Prescription only) and remediation of the cross-tenant data leak.
+
+---
+
+PART 5 — DEVIATION & SCOPE CONTROL
+
+* Features implemented that are not required: Barcode lookup and barcode-based medicine indexing in ScanService and MedicineService.
+* Features discussed but should be frozen or removed: processBarcode method in ScanService and the barcode field in Medicine.
+* Areas where complexity was added without user value: Multi-database aggregation in HistoryService is high value, but current error handling for cross-DB failures is missing.
+
+STOP / PAUSE / PROCEED list:
+* STOP: Developing barcodes or social features.
+* PAUSE: Expanding the Group or Admin modules.
+* PROCEED: Patching security leaks and implementing OCR-based suggestion logic.
+
+---
+
+PART 6 — CORRECTIVE ACTION PLAN (GOAL-LOCKED)
+
+1. URGENT: Fix Cross-Tenant Leak: Update NotificationScheduler.java:74 to filter by userId in the InventoryRepository.
+2. Prune Barcode Logic: Delete ScanService.processBarcode and barcodeLookup. Remove Medicine.barcode fields to align with "OCR Only" mandate.
+3. Bridge Mock OCR: Integrate a base OCR library (e.g. Tesseract) to extract raw text as suggested in the goal. Move from MockMedicine to OCR_ExtractedText.
+4. Harden Cross-DB Integrity: Update ReminderService.recordAction to throw an exception if the SQL inventory update fails, preventing MongoDB history from desyncing with physical stock.
+5. Biometric Gate: Document (and verify in mobile) the biometric authentication gate as the primary entry point.
+
+---
+
+PART 7 — FINAL VERDICT
+
+* Current alignment score (0-100): 82 / 100
+* Are we on the right track? YES (Conditional). The core logic is exceptionally strong.
+* Can we reach goal completion without rewrites? YES. The structure is correct; only pruning and one major feature (real OCR) are needed.
+* Estimated remaining effort (time + risk): 15-20 Working Days (Primarily OCR integration, Security Hardening, and Barcode removal).

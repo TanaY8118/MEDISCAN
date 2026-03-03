@@ -1,0 +1,31 @@
+ALGORITHM USAGE REPORT - MEDISCAN SECURE
+
+MODULE 1: USER AUTHENTICATION AND AUTHORIZATION
+- BCrypt adaptive password hashing: [USED] Implemented in SecurityConfig.java via BCryptPasswordEncoder.
+- Constant-time credential comparison: [USED] Handled by Spring Security's PasswordEncoder.matches().
+- JWT (HMAC-SHA256): [USED] Implemented in JwtUtil.java via HS256 algorithm.
+- Stateless role-based access control (RBAC): [USED] Implemented in SecurityConfig.java and AuthService.java.
+
+MODULE 2: MEDICINE DATA PROCESSING
+- Tesseract OCR: [REPLACED] Currently mocked in ScanService.java; awaits real integration.
+- ZXing barcode decoding: [REPLACED] Currently uses a static map lookup in ScanService.java.
+- Rule-based data validation: [USED] Implemented via JSR-303 annotations and custom logic.
+- Hash-based duplicate detection: [NOT USED] Current logic uses standard repository existsByBarcode checks.
+
+MODULE 3: REMINDER SCHEDULING AND NOTIFICATION
+- Cron-based time scheduling: [USED] Implemented in NotificationScheduler.java via Spring @Scheduled.
+- Finite State Machine (FSM): [USED] Implemented in ReminderService.java for reminder state management.
+
+MODULE 4: INVENTORY MANAGEMENT
+- Atomic increment/decrement operations: [USED] Implemented in InventoryService.java with logging.
+- ACID-compliant transactional integrity: [USED] Enforced project-wide using @Transactional.
+
+MODULE 5: DATA STORAGE AND RETRIEVAL
+- ORM-based relational mapping (JPA/Hibernate): [USED] For MySQL database integration.
+- MongoDB BSON document storage: [USED] Primarily for Medicine and ReminderHistory.
+- Indexed query execution: [USED] Standard indexing on primary keys and MongoDB collections.
+
+MODULE 6: SECURITY, VALIDATION, AND ERROR HANDLING
+- JWT request filtering: [USED] Implemented in JwtFilter.java as a security gate.
+- Global exception handling: [USED] Implemented via @RestControllerAdvice in GlobalExceptionHandler.java.
+- Structured JSON-based logging: [USED] Implemented via SLF4J/Logback for system audit trails.

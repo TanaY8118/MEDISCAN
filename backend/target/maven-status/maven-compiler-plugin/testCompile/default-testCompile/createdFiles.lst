@@ -1,0 +1,9 @@
+com\mediscan\reminder\ReminderTenantIsolationIT.class
+com\mediscan\auth\AuthControllerIT.class
+com\mediscan\medicine\MedicineTenantIsolationIT.class
+com\mediscan\group\GroupTenantIsolationIT.class
+com\mediscan\history\HistoryTimelineIT.class
+com\mediscan\inventory\InventoryTenantIsolationIT.class
+com\mediscan\support\TestDataFactory.class
+com\mediscan\BaseIntegrationTest.class
+com\mediscan\support\AuthTestHelper.class

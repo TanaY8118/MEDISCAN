@@ -1,0 +1,449 @@
+MediScan Secure — Core-Aligned Project Abstract
+High-Level Truth
+
+MediScan Secure is not a healthcare intelligence platform.
+It is a secure, mobile-first medicine adherence and inventory system with assisted data capture and privacy-first design.
+
+Everything else is optional, deferred, or future-facing.
+
+1. Reframed Core Objectives (What This Project MUST Achieve)
+
+Stripping away ambition inflation, MediScan Secure’s true, defensible objectives are:
+
+Reduce medication adherence failures
+
+Missed doses
+
+Duplicate doses
+
+Forgotten refills
+
+Minimize user effort
+
+Avoid manual data entry wherever possible
+
+Use scanning as a helper, not a medical authority
+
+Guarantee data correctness
+
+Every action is recorded
+
+History is immutable
+
+Inventory is always consistent
+
+Protect sensitive health data
+
+Secure authentication
+
+Encrypted storage
+
+Controlled access sharing
+
+Remain mobile-reliable
+
+Works under retries
+
+Survives partial failures
+
+Battery-efficient
+
+Low network overhead
+
+If a feature does not directly serve one of these, it is non-core.
+
+2. Reality Check: What OCR Actually Means Here
+
+Your proposal states:
+
+“Automatically extract medicine name, dosage, and schedule”
+
+In academic proposals, this is fine.
+In real systems, this must be constrained.
+
+Correct Interpretation (Aligned with Your Backend)
+
+OCR in MediScan Secure should be treated as:
+
+Assistive input
+
+Best-effort extraction
+
+User-confirmed data
+
+Not:
+
+A source of medical truth
+
+A prescription interpreter
+
+A dosage authority
+
+Your current Scan MVP (mock OCR + barcode) is architecturally correct.
+
+Future OCR should:
+
+Suggest medicine name
+
+Suggest dosage text
+
+Never auto-commit schedules or quantities
+
+This keeps you legally safe and technically sane.
+
+3. Security Objectives — What Is Essential vs Inflated
+Essential (Must Exist)
+
+Secure authentication (JWT / biometric gate on device)
+
+Encrypted local storage
+
+Secure transport (HTTPS)
+
+Access control boundaries (user vs group)
+
+Overstated / Optional for MVP
+
+AES everywhere on backend data
+
+Full cryptographic pipelines
+
+Research-grade analytics
+
+Your backend already satisfies production-grade security for an MVP.
+
+Anything beyond this belongs to post-MVP hardening, not core delivery.
+
+4. Feature Scope Alignment (Module-by-Module Truth Table)
+Module 1: Authentication & Security
+
+Status: Core
+Backend: Implemented
+Verdict: Correct and sufficient
+
+Module 2: OCR-Based Scanning
+
+Status: Assistive, not authoritative
+Backend: MVP mock implemented
+Verdict: Correct for current phase
+
+Module 3: Smart Reminders
+
+Status: Core
+Backend: Implemented with idempotency
+Verdict: Strong and well-designed
+
+Module 4: Medicine Information
+
+Status: Informational only
+Backend: Partial / optional
+Verdict: Should remain read-only, non-critical
+
+Module 5: Smart Alerts & Insights
+
+Status: Core (only alerts, not insights)
+Backend: Implemented (low stock + adherence)
+Verdict: Do not add analytics dashboards
+
+Module 6: Family / Caregiver
+
+Status: Controlled sharing, not social
+Backend: Group model implemented
+Verdict: Keep permissions simple
+
+Module 7: Admin / Analytics
+
+Status: Non-core for MVP
+Backend: Minimal
+Verdict: Do not expand
+
+5. What This Project Is NOT (Explicitly)
+
+To prevent overflow, this must be written down and respected:
+
+MediScan Secure is not:
+
+A medical diagnosis system
+
+A prescription validation engine
+
+A drug recommendation system
+
+A real-time monitoring platform
+
+A wearable-integrated health suite
+
+A data analytics product
+
+If it smells like “AI healthcare”, it does not belong here.
+
+MediScan Secure — User Flow (OCR-Only, Mobile-First)
+0. First Launch & Trust Establishment
+
+Goal: Establish identity and secure environment before handling health data.
+
+User Actions
+
+Install the app
+
+Open the app
+
+Authenticate using:
+
+Biometric authentication (preferred)
+
+Secure credential fallback
+
+System Behavior
+
+Secure user identity is created
+
+Encrypted local storage initialized
+
+No medical data exists yet
+
+Invariant
+
+No medicine data without authenticated user
+
+1. Add a Medicine (Single Entry Path)
+OCR-Based Prescription Scan (Primary & Only Scan Flow)
+
+User Actions
+
+Tap “Add Medicine”
+
+Choose “Scan Prescription”
+
+Capture image of prescription (camera)
+
+System Behavior
+
+OCR extracts raw text from prescription
+
+System attempts to identify:
+
+Medicine name(s)
+
+Dosage text (unstructured)
+
+Frequency hints (if present)
+
+Critical Constraint
+
+OCR output is always treated as suggestion
+
+Nothing is auto-saved
+
+User confirmation is mandatory
+
+Manual Correction & Confirmation (Required Step)
+
+User Actions
+
+Review extracted fields
+
+Edit or correct:
+
+Medicine name
+
+Dosage
+
+Frequency
+
+Confirm details
+
+System Behavior
+
+Validates required fields
+
+Creates medicine record only after confirmation
+
+Why this exists
+
+Prescriptions vary widely
+
+OCR is probabilistic
+
+Human confirmation prevents medical errors
+
+2. Create Inventory (Ground Truth)
+
+Goal: Tie medicine to physical quantity.
+
+User Actions
+
+Enter initial quantity
+
+Select unit (tablet, capsule, ml, etc.)
+
+Set low-stock threshold
+
+Save inventory
+
+System Behavior
+
+Inventory becomes the single source of truth
+
+Quantity cannot drop below zero
+
+Inventory is independent of reminder logic
+
+Invariant
+
+No reminders without inventory
+
+3. Configure Reminder Schedule
+
+User Actions
+
+Set dosage times
+
+Set frequency (daily / custom)
+
+Save reminder
+
+System Behavior
+
+Reminder schedule stored
+
+No inventory change yet
+
+4. Daily Reminder Execution (Core Usage Loop)
+Notification Delivery
+
+User Experience
+
+Receives scheduled reminder
+
+Poll-based, battery-efficient
+
+No constant background activity
+
+User Response
+
+User selects one:
+
+TAKEN
+
+SKIPPED
+
+DELAYED
+
+IGNORED (auto-marked MISSED)
+
+System Processing (Critical Integrity Path)
+
+On TAKEN action:
+
+Idempotency check (prevents duplicate decrement)
+
+Append reminder_history entry
+
+Atomically:
+
+Decrement inventory quantity
+
+Insert inventory_log record
+
+Guarantees
+
+No double decrement
+
+Every change audited
+
+Inventory and logs stay consistent
+
+5. Low Stock Awareness
+
+User Experience
+
+Low-stock alert appears during reminder polling
+
+No push spam
+
+No forced refill actions
+
+System Behavior
+
+Severity-based alerting
+
+Informational only
+
+6. History & Accountability
+
+User Actions
+
+View timeline (last N days)
+
+System Behavior
+
+Aggregates:
+
+Reminder actions
+
+Inventory changes
+
+Immutable, append-only history
+
+User Sees
+
+What was taken
+
+What was missed
+
+How inventory changed
+
+7. Family / Caregiver Visibility (Optional)
+
+User Actions
+
+Share view access with caregiver
+
+System Behavior
+
+Read-only by default
+
+No modification without explicit permission
+
+Constraint
+
+Visibility, not control
+
+8. Failure Handling (Invisible but Critical)
+
+Handled silently:
+
+OCR failures
+
+Network loss
+
+Duplicate taps
+
+Retry storms
+
+User sees:
+
+Clear retry guidance
+
+No silent data loss
+
+Core Product Loop (Final)
+
+Scan prescription → confirm → inventory → remind → record → decrement → alert → repeat
+
+Explicit Scope Lock (Non-Negotiable)
+
+The system does NOT:
+
+Scan barcodes
+
+Auto-save OCR output
+
+Guess schedules
+
+Predict refills
+
+Modify history
+
+Replace human confirmation

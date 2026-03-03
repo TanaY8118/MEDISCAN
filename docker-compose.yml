@@ -1,0 +1,78 @@
+# WARNING: This docker-compose.yml is for LOCAL DEVELOPMENT ONLY
+# For production, use environment variables from .env file or secret management
+# Never commit real production secrets to this file
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mediscan_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-mediscan}
+      MYSQL_USER: ${MYSQL_USER:-mediscan_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mediscan_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - mediscan_net
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mediscan_mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-rootpassword}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - mediscan_net
+
+  backend:
+    build: ./backend
+    container_name: mediscan_backend
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      MYSQL_URL: ${MYSQL_URL:-jdbc:mysql://mysql:3306/mediscan?useSSL=false&allowPublicKeyRetrieval=true}
+      MYSQL_USER: ${MYSQL_USER:-mediscan_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mediscan_password}
+      MONGO_URI: ${MONGO_URI:-mongodb://root:rootpassword@mongodb:27017/mediscan?authSource=admin}
+      JWT_SECRET: ${JWT_SECRET}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
+    depends_on:
+      - mysql
+      - mongodb
+    networks:
+      - mediscan_net
+
+  # Migration job (run separately: docker-compose --profile migration up migration)
+  migration:
+    build: ./backend
+    container_name: mediscan_migration
+    profiles:
+      - migration
+    environment:
+      MYSQL_URL: ${MYSQL_URL:-jdbc:mysql://mysql:3306/mediscan?useSSL=false&allowPublicKeyRetrieval=true}
+      MYSQL_MIGRATOR_USER: ${MYSQL_MIGRATOR_USER:-${MYSQL_USER:-mediscan_user}}
+      MYSQL_MIGRATOR_PASSWORD: ${MYSQL_MIGRATOR_PASSWORD:-${MYSQL_PASSWORD:-mediscan_password}}
+      SPRING_PROFILES_ACTIVE: migration
+    depends_on:
+      - mysql
+    networks:
+      - mediscan_net
+    command: [ "sh", "-c", "sleep 10 && java -jar app.jar --spring.profiles.active=migration" ]
+
+networks:
+  mediscan_net:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  mongo_data:

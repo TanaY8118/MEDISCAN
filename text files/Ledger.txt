@@ -1,0 +1,146 @@
+# Project Initialization Ledger
+
+## Phase 1: Project Initialization
+
+### 1. Planning & Setup
+*   [x] Initialized project repository `medicine-management-system`.
+*   [x] Created `task.md` to track project progress and status.
+*   [x] Created `implementation_plan.md` outlining the architecture, tech stack, and verification plan.
+
+### 2. Infrastructure & Configuration
+*   [x] Created `docker-compose.yml` defining `mysql` (Port 3306) and `mongodb` (Port 27017) services.
+*   [x] Created `.env.example` template for environment variables (DB URLs, JWT Secrets).
+*   [x] Created `README.md` with project overview, architecture details, and setup instructions.
+*   [x] Created `.github/workflows/ci.yml` for Automated CI (Build Backend & Frontend).
+
+### 3. Backend (Spring Boot) Setup
+*   [x] Created `backend/pom.xml` managing dependencies:
+    *   Spring Boot Starter Web, Data JPA, Data MongoDB, Security, Validation, Test.
+    *   MySQL Connector, Lombok, Flyway Core/MySQL.
+    *   JJWT (Java JWT) for authentication.
+*   [x] Created `backend/src/main/java/com/mediscan/MediscanApplication.java` (Main Entry Point).
+*   [x] Created `backend/src/main/resources/application.yml` configuring:
+    *   Server Port (8080).
+    *   MySQL Datasource & Hibernate Dialect.
+    *   MongoDB URI.
+*   [x] Created `backend/src/main/resources/db/migration/V1__init_schema.sql` for initial relational schema (Users, Groups).
+
+### 4. Frontend (React Native) Setup
+*   [x] Created `frontend/package.json` managing dependencies:
+    *   React, React Native, TypeScript.
+    *   React Navigation (Stack, Bottom Tabs).
+    *   Axios (API Client), Async Storage.
+    *   Formik, Yup (Validation).
+    *   React Native Camera.
+*   [x] Created `frontend/tsconfig.json` with path aliases (`@api`, `@components`, etc.).
+*   [x] Created `frontend/App.tsx` (Main Entry Point).
+
+### 5. Detailed Scaffolding
+*   [x] Executed automation script to create the following directory structure:
+    *   **Backend Modules**: `auth`, `user`, `group`, `inventory`, `medicine`, `reminder`, `history`, `scan`, `common`, `config`.
+    *   **Frontend Modules**: `api`, `navigation`, `screens` (auth, home, medicine, inventory, reminder, history, groups, settings), `components`, `context`, `hooks`, `utils`, `assets`.
+*   [x] Verified directory structure creation.
+
+## Phase 2: Backend Development (Core & Auth)
+
+### 1. Database & User Module
+*   [x] Created `MongoConfig.java` to enable MongoDB auditing (created/updated dates).
+*   [x] Implemented `User` entity (JPA) with Lombok annotations and `Role` enum.
+*   [x] Implemented `UserRepository` with standard finders (`findByUsername`, `findByEmail`).
+
+### 2. Security Infrastructure
+*   [x] Implemented `JwtUtil` for token creation, validation, and claim extraction.
+*   [x] Implemented `UserService` implementing `UserDetailsService` to load users from DB.
+*   [x] Implemented `JwtFilter` to intercept requests and validate Bearer tokens.
+*   [x] Created `SecurityConfig` with `SecurityFilterChain` (Stateless session, Public `/auth/**`, JWT Filter).
+*   [x] Added `BCryptPasswordEncoder` bean.
+*   [x] Created Auth DTOs: `LoginRequest`, `RegisterRequest`, `AuthResponse`.
+*   [x] Implemented `AuthService` with `register` (saves user, returns JWT) and `login` (validates credentials, returns JWT).
+*   [x] Implemented `AuthController` exposing `/api/auth/register` and `/api/auth/login`.
+
+### 3. Medicine Module (MongoDB)
+*   [x] Created `Medicine` document (MongoDB) with `@CreatedDate` and `@LastModifiedDate`.
+*   [x] Created `MedicineRepository` extending `MongoRepository` with barcode finders.
+*   [x] Created `MedicineRequest` DTO.
+*   [x] Implemented `MedicineService` (CRUD logic, Auth context for `createdBy`).
+*   [x] Implemented `MedicineController` exposing REST APIs (`/api/medicines`).
+
+### 4. Inventory Module (MySQL)
+*   [x] Created `Inventory` entity linking `medicineId` (String) to stock levels.
+*   [x] Created `InventoryRepository`.
+*   [x] Created `InventoryRequest` DTO.
+*   [x] Implemented `InventoryService` with `@Transactional` stock adjustments.
+*   [x] Implemented `InventoryController` (Set stock, Get by Medicine, Adjust stock).
+
+### 5. Reminder Module (MongoDB)
+*   [x] Created `Reminder` document (MongoDB) linking User and Medicine.
+*   [x] Created `ReminderRepository`.
+*   [x] Created `ReminderRequest` DTO with `@Future` validation.
+*   [x] Implemented `ReminderService` (Create, List by User, Mark as Taken).
+*   [x] Implemented `ReminderController`.
+
+### 6. Group Module (MySQL)
+*   [x] Created `Group` entity (MySQL Table `user_groups`).
+*   [x] Created `GroupRepository` with owner finders.
+*   [x] Implemented `GroupService` (Current user lookup, creation).
+*   [x] Implemented `GroupController` (Create, List My Groups).
+
+### 7. Audit & Exceptions
+*   [x] Created `MedicineHistory` document and `HistoryRepository`.
+*   [x] Implemented `HistoryService` with `@Async` logging support.
+*   [x] Created `AsyncConfig` to enable asynchronous processing.
+*   [x] Implemented `GlobalExceptionHandler` (Runtime Exceptions, Validation Errors).
+
+## Phase 3: Frontend Development (React Native)
+
+### 1. Foundation & Auth
+*   [x] Created `api/client.ts` with Axios interceptors.
+*   [x] Created `api/auth.api.ts` for login/register calls.
+*   [x] Created `context/AuthContext.tsx` managing token state in `AsyncStorage`.
+*   [x] Implemented `screens/auth/LoginScreen.tsx` with AuthContext integration.
+*   [x] Implemented `screens/auth/RegisterScreen.tsx`.
+*   [x] Set up `navigation/AuthNavigator.tsx` (Stack Navigator).
+*   [x] Updated `App.tsx` to handle conditional navigation (Auth vs App) using `userToken`.
+
+### 2. Dashboard & Navigation
+*   [x] Created `screens/home/DashboardScreen.tsx` with stats overview and quick action buttons.
+*   [x] Create `navigation/AppNavigator.tsx` with Bottom Tabs (Dashboard, Medicines, Inventory, Settings).
+*   [x] Linked `AppNavigator` to `App.tsx` replacing the placeholder Home screen.
+
+### 3. Medicine Management
+*   [x] Created `api/medicine.api.ts` (Get, Create, Update, Delete).
+*   [x] Implemented `screens/medicine/MedicineListScreen.tsx` with FAB and pull-to-refresh.
+*   [x] Implemented `screens/medicine/AddMedicineScreen.tsx`.
+*   [x] Created `navigation/MedicineNavigator.tsx` (Stack) and integrated into `AppNavigator`.
+
+### 4. Inventory Module
+*   [x] Created `api/inventory.api.ts`.
+*   [x] Implemented `screens/inventory/InventoryListScreen.tsx` (Joined with Medicine data).
+*   [x] Implemented `screens/inventory/AdjustStockScreen.tsx` (Add/Remove Stock, Update Threshold).
+*   [x] Created `navigation/InventoryNavigator.tsx` and integrated into `AppNavigator`.
+
+### 5. Reminder Module
+*   [x] Created `api/reminder.api.ts` (Get, Create, Mark Taken).
+*   [x] Implemented `screens/reminder/ReminderListScreen.tsx` with Overdue/Taken styling.
+*   [x] Implemented `screens/reminder/AddReminderScreen.tsx`.
+*   [x] Created `navigation/ReminderNavigator.tsx` and integrated into `AppNavigator`.
+
+### 6. Profile & Utils
+*   [x] Backend: Created `UserController` with `/api/users/me` endpoint.
+*   [x] Frontend: Implemented `screens/settings/SettingsScreen.tsx` fetching user profile.
+*   [x] Frontend: Implemented `screens/common/ScanScreen.tsx` (Simulated Barcode Scanner).
+*   [x] Frontend: Updated `AppNavigator.tsx` with custom Floating Action Button for Scan.
+*   [x] Frontend: Updated `AddMedicineScreen.tsx` to accept scanned barcode from simulation.
+
+### 7. Integration & Verification
+*   [x] Created `backend/Dockerfile` for multi-stage Spring Boot build.
+*   [x] Updated `docker-compose.yml` to include the `backend` service linked to databases.
+*   [x] Created `scripts/verify_flow.py` for automated end-to-end API testing.
+
+### 8. Documentation & Wrap-up
+*   [x] Created `docs/architecture.md` with Mermaid diagrams.
+*   [x] Created `docs/api_reference.md`.
+*   [x] Generated `walkthrough.md` artifact.
+*   [x] Finalized CI/CD workflow (`.github/workflows/ci.yml`).
+
+**Project Status: COMPLETE**

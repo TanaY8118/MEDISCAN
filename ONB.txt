@@ -1,0 +1,131 @@
+# ONBOARDING DIRECTIVE: OPERATION MEDISCAN - TECHNICAL OVERVIEW
+
+**DATE:** 2026-02-13
+**STATUS:** ACTIVE - ARCHITECTURAL HARDENING PHASE
+**BASE DIRECTORY:** `c:\Users\ampas\OneDrive\Desktop\medicine-management-system`
+
+---
+
+## 1. STRATEGIC TIMELINE (PROJECT EVOLUTION)
+
+**Phase 1: Inception & Prototyping (Dec 2025)**
+- **Objective:** Proof of concept for a medicine management system.
+- **Key Actions:**
+    - Initialized Spring Boot backend with basic CRUD operations.
+    - Set up local MySQL and MongoDB instances via Docker.
+    - Created initial React Native screens (Login, Dashboard).
+
+**Phase 2: Core Feature Development (Jan 2026)**
+- **Objective:** Reach MVP status with essential functionality.
+- **Key Actions:**
+    - Implemented `InventoryService` for stock management.
+    - Developed `ReminderService` for scheduling notifications.
+    - Integrated authentication (JWT) and basic user roles.
+    - Built out the mobile UI with `React Navigation`.
+
+**Phase 3: Refinement & Validation (Early Feb 2026)**
+- **Objective:** Stabilize the application and improve UX.
+- **Key Actions:**
+    - Debugged mobile app crashes and dependency issues (React Native 0.73).
+    - Refined API error handling and response DTOs.
+    - Added comprehensive documentation (`PADI.txt`, `INFO4u.txt`).
+
+**Phase 4: Architectural Hardening (Current Stage - Feb 2026)**
+- **Objective:** Secure the platform for multi-tenant production use.
+- **Key Actions:**
+    - **Schema Drift Elimination:** Enforced Flyway as the single source of truth; disabled Hibernate DDL.
+    - **Security Hardening:** Removed hardcoded secrets; separated runtime/migration credentials.
+    - **Data Ownership:** Enforced strict tenant isolation via `userId` foreign keys and service-layer filtering.
+
+---
+
+## 2. COMPREHENSIVE FILE STRUCTURE
+
+This project is a monorepo containing both the backend API and the mobile frontend.
+
+### ROOT DIRECTORY (`/`)
+| File/Folder | Description |
+| :--- | :--- |
+| `docker-compose.yml` | Orchestrates MySQL, MongoDB, and other services. |
+| `SECURITY.md` | **CRITICAL.** Outlines the security model, secrets management, and access control policies. |
+| `.env.example` | Template for required environment variables. Copy this to `.env`. |
+| `ONB.txt` | This onboarding document. |
+| `README.md` | General project overview. |
+
+### BACKEND SERVICE (`/backend`)
+Java Spring Boot application handling business logic, data persistence, and API endpoints.
+
+```text
+backend/
+├── src/main/java/com/mediscan/
+│   ├── MediscanApplication.java  # Main entry point
+│   ├── config/                   # Security, Swagger, CORS configs
+│   │   └── SecurityConfig.java
+│   ├── auth/                     # Authentication & JWT logic
+│   ├── user/                     # User entity & management
+│   ├── inventory/                # core: Stock management
+│   │   ├── entity/               # Inventory, InventoryLog
+│   │   ├── repository/           # JPA Repositories
+│   │   ├── service/              # Business logic (InventoryService)
+│   │   └── controller/           # REST Endpoints
+│   ├── medicine/                 # core: Medicine catalog (MongoDB backed)
+│   ├── reminder/                 # core: Notification scheduling
+│   ├── history/                  # Audit & Timeline aggregation
+│   └── common/                   # Global exception handling & utilities
+│
+└── src/main/resources/
+    ├── application.yml           # Runtime config (Sanitized)
+    ├── application-migration.yml # Migration-specific config
+    └── db/migration/             # Flyway SQL Scripts (Source of Truth)
+        ├── V001__baseline_schema.sql      # Consolidated schema
+        └── V002__add_user_ownership.sql   # Tenancy enforcement
+```
+
+### FRONTEND MOBILE APP (`/frontend`)
+React Native application for iOS and Android.
+
+```text
+frontend/
+├── package.json                  # Dependencies (React Native 0.73+)
+├── src/
+│   ├── api/                      # Axios instances & API service calls
+│   ├── assets/                   # Images, Fonts, Icons
+│   ├── components/               # Reusable UI elements (Buttons, Cards)
+│   ├── constants/                # App-wide constants (Colors, Strings)
+│   ├── context/                  # Global State (AuthContext, ThemeContext)
+│   ├── hooks/                    # Custom React Hooks
+│   ├── navigation/               # Stack & Tab Navigators
+│   ├── screens/                  # Feature Screens
+│   │   ├── auth/                 # Login, Register
+│   │   ├── dashboard/            # Home, Summary
+│   │   ├── inventory/            # Stock List, Add/Edit Medicine
+│   │   └── reminder/             # Reminder schedulers
+│   └── utils/                    # Helpers (Date formatting, Validation)
+└── android/ & ios/               # Native platform code
+```
+
+---
+
+## 3. OPERATIONAL PROTOCOLS
+
+### 1. The "Golden Rule" of Data Access
+**ALL** data access must be scoped to the authenticated user.
+- **Backend:** `repository.findByUserId(currentUser.getId())` is mandatory.
+- **Frontend:** Ensure API calls handle `401 Unauthorized` gracefully.
+
+### 2. Migration Protocol
+We do **NOT** rely on Hibernate to create tables.
+To change the DB schema:
+1.  Create a new SQL file in `backend/src/main/resources/db/migration` (e.g., `V003__description.sql`).
+2.  Run the migration profile to apply changes.
+3.  Update the Java Entity to match.
+
+### 3. Secrets Management
+- **NEVER** commit secrets to Git.
+- Use `.env` for local development.
+- Production deployments inject secrets via environment variables in the container runtime.
+
+---
+
+**WELCOME ABOARD.**
+Review `SECURITY.md` next. Then, proceed to set up your local environment using `docker-compose.yml`.

@@ -1,0 +1,62 @@
+# Project Essentials & Dependencies
+
+## 1. System Requirements
+*   **Operating System**: Windows / macOS / Linux
+*   **Java Development Kit (JDK)**: Version 17 or higher (Required for Spring Boot)
+*   **Node.js**: Version 18.x or higher (Required for React Native)
+*   **Docker Desktop**: Required for running MySQL and MongoDB containers
+*   **Android Studio**: For Android Emulator and SDK (React Native)
+*   **Xcode** (macOS only): For iOS Simulator (React Native)
+*   **Git**: Version Control System
+
+## 2. Infrastructure (Docker Images)
+Defined in `docker-compose.yml`:
+*   `mysql:8.0`: Relational Database for Users, Inventory, Auth.
+*   `mongo:6.0`: NoSQL Database for Medicines, Reminders.
+
+## 3. Backend Dependencies (Spring Boot)
+Managed via Maven (`pom.xml`).
+*   **Framework Core**:
+    *   `org.springframework.boot:spring-boot-starter-web`: REST API support.
+    *   `org.springframework.boot:spring-boot-starter-security`: Authentication & Authorization.
+    *   `org.springframework.boot:spring-boot-starter-validation`: Bean Validation (Hibernate Validator).
+*   **Data Access**:
+    *   `org.springframework.boot:spring-boot-starter-data-jpa`: JPA/Hibernate for MySQL.
+    *   `org.springframework.boot:spring-boot-starter-data-mongodb`: Spring Data for MongoDB.
+    *   `com.mysql:mysql-connector-j`: JDBC Driver for MySQL.
+    *   `org.flywaydb:flyway-core` & `flyway-mysql`: Database Migration version control.
+*   **Utilities**:
+    *   `org.projectlombok:lombok`: Boilerplate reduction (Getters/Setters).
+    *   `io.jsonwebtoken:jjwt-api` (v0.11.5): JWT Interface.
+    *   `io.jsonwebtoken:jjwt-impl` (v0.11.5): JWT Implementation.
+    *   `io.jsonwebtoken:jjwt-jackson` (v0.11.5): JWT JSON Processor.
+*   **Testing**:
+    *   `spring-boot-starter-test`: JUnit 5, Mockito.
+    *   `spring-security-test`: Security testing support.
+
+## 4. Frontend Dependencies (React Native)
+Managed via NPM (`package.json`).
+*   **Core**:
+    *   `react` (18.2.0)
+    *   `react-native` (0.73.0)
+*   **Navigation**:
+    *   `@react-navigation/native`
+    *   `@react-navigation/native-stack`
+    *   `@react-navigation/bottom-tabs`
+    *   `react-native-screens`
+    *   `react-native-safe-area-context`
+*   **State & Networking**:
+    *   `axios`: HTTP Client for API requests.
+    *   `@react-native-async-storage/async-storage`: Local storage for tokens.
+    *   `react-native-context` (Built-in).
+*   **UI & Utilities**:
+    *   `react-native-vector-icons`: Icons (MaterialIcons, FontAwesome, etc).
+    *   `formik`: Form state management.
+    *   `yup`: Schema validation.
+    *   `date-fns`: Date manipulation.
+    *   `react-native-camera`: Camera access for scanning (Prototype).
+
+## 5. Development Tools
+*   **IDE**: IntelliJ IDEA (Backend), VS Code (Frontend) recommended.
+*   **API Testing**: Postman or Thunder Client.
+*   **Database Tools**: MySQL Workbench, MongoDB Compass.

@@ -1,0 +1,57 @@
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: mediscan-backend
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/mediscan}
+    username: ${MYSQL_USER:mediscan_user}
+    password: ${MYSQL_PASSWORD:mediscan_password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: ${SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://root:rootpassword@localhost:27017/mediscan?authSource=admin}
+  flyway:
+    enabled: false
+    clean-disabled: true
+
+logging:
+  level:
+    com.mediscan: ${LOG_LEVEL_COM_MEDISCAN:INFO}
+    org.springframework.web: INFO
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:4e6a625a655468576d5a7134743777217a25432a462d4a614e645267556a586e}
+  expiration: ${JWT_EXPIRATION:86400000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+# Management & Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+
+# Application Info
+info:
+  app:
+    name: MediScan Backend
+    version: 1.0.0
+    description: Mobile-first medicine management system

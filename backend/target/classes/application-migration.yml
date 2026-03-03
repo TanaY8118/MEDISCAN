@@ -1,0 +1,17 @@
+# Migration Profile Configuration
+# This profile is used ONLY during database migration runs (separate job/container)
+# DO NOT use this profile for runtime application execution
+
+spring:
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/mediscan}
+    username: ${MYSQL_MIGRATOR_USER:mediscan_user}
+    password: ${MYSQL_MIGRATOR_PASSWORD:mediscan_password}
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+    clean-disabled: true
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
+    baseline-version: ${FLYWAY_BASELINE_VERSION:1}

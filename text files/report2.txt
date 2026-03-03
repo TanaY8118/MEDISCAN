@@ -1,0 +1,85 @@
+# MediScan Backend Gap Analysis Report
+
+## EXECUTIVE SUMMARY
+
+**Overall Readiness Score: 68/100**
+**Production-Ready Status: CONDITIONAL**
+
+The MediScan backend demonstrates a strong architectural foundation with strictly enforced DTO-only API contracts and a robust append-only audit trail for inventory. However, the system currently harbors **critical security and data integrity risks** that must be remediated before any production traffic is allowed. The hybrid database strategy (MySQL + MongoDB) is functional but lacks robust error handling for cross-database failures.
+
+### Top Five Risks (Ranked by Severity)
+
+1.  **CRITICAL: Cross-Tenant Data Leak** in `NotificationScheduler.checkLowStockAlerts` (ignores userId filter).
+2.  **HIGH: Cross-DB Data Integrity** in `ReminderService.recordAction` (MySQL failure doesn't roll back MongoDB history).
+3.  **HIGH: Invariant Bypass** in `InventoryService` (internal update methods bypass mandatory logging).
+4.  **MEDIUM: Minimal Exception Hygiene** (Global use of `RuntimeException` for business logic flow).
+5.  **MEDIUM: Mocked Feature Core** (`ScanService` is entirely mocked, providing false sense of completion).
+
+**Ship Recommendation: DO NOT SHIP** until Blockers 1 and 2 are addressed.
+
+---
+
+## GAP MATRIX
+
+| Area | Status | Risk Level | Action Required |
+| :--- | :--- | :--- | :--- |
+| **Architecture** | Mature | Low | Solidify `HistoryService` aggregation logic. |
+| **Database** | Complete | Medium | Fix inventory update consistency. |
+| **API Contracts** | Frozen | Low | None (Excellent compliance). |
+| **Security** | Fragile | Critical | Fix cross-tenant leak in scheduler. |
+| **Resilience** | Partial | High | Implement compensation for cross-DB failures. |
+| **Observability** | Basic | Medium | Unblock Actuator endpoints for health checks. |
+
+---
+
+## CRITICAL BLOCKERS
+
+### 1. Cross-Tenant Security Leak in `NotificationScheduler`
+*   **File:** [NotificationScheduler.java](file:///c:/Users/ampas/OneDrive/Desktop/medicine-management-system/backend/src/main/java/com/mediscan/notification/service/NotificationScheduler.java#L73-79)
+*   **Danger:** The `checkLowStockAlerts` method accepts a `userId` but performs a `findAll()` on all inventories, returning data belonging to other users. This is a GDPR/Privacy violation and a major security hole.
+*   **Required Fix:** Update `InventoryRepository` to support `findByUserId` (or equivalent via mapping) and filter the query at the DB level.
+*   **Estimated Time:** 1-2 hours.
+
+### 2. Silent Cross-DB Desync in `ReminderService`
+*   **File:** [ReminderService.java](file:///c:/Users/ampas/OneDrive/Desktop/medicine-management-system/backend/src/main/java/com/mediscan/reminder/service/ReminderService.java#L182-186)
+*   **Danger:** If the MySQL inventory update fails, the exception is caught, logged, and **ignored**. The MongoDB reminder history remains saved, giving the user (and the system) the impression that the dose was recorded accurately while the physical stock remains incorrect.
+*   **Required Fix:** Implement a two-phase update or a Saga-lite pattern. At minimum, the MongoDB operation should be part of the transaction or rolled back manually if MySQL fails.
+*   **Estimated Time:** 4-6 hours.
+
+### 3. Invariant Violation in `InventoryService`
+*   **File:** [InventoryService.java](file:///c:/Users/ampas/OneDrive/Desktop/medicine-management-system/backend/src/main/java/com/mediscan/inventory/service/InventoryService.java#L35-61)
+*   **Danger:** `addOrUpdateInventory` and `adjustStock` bypass the `updateQuantity` method, which is documented as the "ONLY" way to update stock to ensure logging. This leads to untracked inventory changes.
+*   **Required Fix:** Refactor all quantity-changing methods to use `updateQuantity`.
+*   **Estimated Time:** 2 hours.
+
+---
+
+## PRE-MVP ACTION PLAN
+1.  **REMEDIATE SECURITY:** Patch `NotificationScheduler` to enforce user isolation.
+2.  **ENSURE INTEGRITY:** Fix `ReminderService` to fail-fast on inventory update errors instead of suppressing them.
+3.  **ENFORCE INVARIANTS:** Unify all `InventoryService` updates through the `updateQuantity` logic.
+4.  **HARDEN AUTH:** Update `AuthService` to include `ROLE_USER` by default instead of an empty list to avoid 403s on protected endpoints.
+5.  **ACTUATOR ACCESS:** Securely expose `/actuator/health` to the monitoring system.
+
+---
+
+## POST-MVP EVOLUTION PLAN
+1.  **PERFORMANCE:** Implement caching for the `HistoryService.getTimeline` aggregation.
+2.  **OBSERVABILITY:** Integrate Micrometer/Prometheus for real-time alerting on "Invariant Violation" logs.
+3.  **RELIABILITY:** Move from polling-based notifications to FCM/Push Notifications with a retry buffer.
+4.  **SECURITY:** Implement JWT Refresh Token pattern (currently only short-lived access tokens).
+
+---
+
+## FREEZE LIST
+*   **APIs:** All endpoints in `MedicineController`, `ReminderController`, and `HistoryController`.
+*   **DTOs:** All classes in `com.mediscan.dto.v1`.
+*   **Schemas:** MySQL `inventory_logs` table (Append-only).
+*   **Invariants:** `InventoryLog` @PreUpdate/@PreRemove protections.
+
+---
+
+## STOP-DOING LIST
+*   **DO NOT** refactor the `HistoryService` aggregation into a separate microservice yet (Premature optimization).
+*   **DO NOT** add new features to `ScanService` until OCR/Barcode provider is selected.
+*   **DO NOT** use `HttpStatus.OK` for errors; stick to the current ExceptionHandler pattern but improve hygiene.

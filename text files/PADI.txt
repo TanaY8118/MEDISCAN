@@ -1,0 +1,226 @@
+
+================================================================================
+PROJECT ARCHITECTURE AND DOCUMENTATION INTERFACE (PADI)
+MediScan Secure – Medicine Management System
+================================================================================
+
+1. PROJECT OVERVIEW
+--------------------------------------------------------------------------------
+MediScan Secure is a comprehensive medicine management system designed to help users
+track their medication inventory, schedule reminders, and maintain a history of their
+medicine intake. The system differentiates itself with a hybrid database architecture 
+and a focus on data integrity for critical health-related actions.
+
+Core Features:
+- Medicine Inventory Tracking (Stock levels, Low stock alerts)
+- Smart Reminder System (Scheduled notifications, Intake logging)
+- Barcode/OCR Scanning Support (Simulated for MVP with extensible design)
+- Dual-Database Architecture (Relational for user data, Document for flexible medical data)
+- Secure Authentication with JWT
+
+Technologies Used:
+- Backend: Java Spring Boot 3.x (Web, Data JPA, Data MongoDB, Security, Validation)
+- Frontend: React.js (Planned/Prototype phase)
+- Databases: 
+  * MySQL (User Management, Inventory Transaction Logs)
+  * MongoDB (Medicine Documents, Flexible Reminder Data)
+- Security: Spring Security, JSON Web Tokens (JWT), BCrypt Hashing
+
+
+2. CODEBASE STRUCTURE OVERVIEW
+--------------------------------------------------------------------------------
+The backend codebase follows a "Package-by-Feature" architecture to ensure modularity
+and high cohesion. This structure makes it easier to navigate during a review as all
+related files (Controller, Service, Repository, Entity) for a feature are grouped together.
+
+Root Package: com.mediscan
+
+Key Packages:
+- com.mediscan.auth       -> Authentication logic, JWT handling
+- com.mediscan.config     -> Global configurations (Security, CORS, Swagger)
+- com.mediscan.medicine   -> Medicine Catalog management (MongoDB)
+- com.mediscan.inventory  -> Stock management & Audit logs (MySQL)
+- com.mediscan.reminder   -> Scheduling & Intake tracking (MongoDB + MySQL coordination)
+- com.mediscan.scan       -> OCR and Barcode processing simulation
+- com.mediscan.user       -> User profile management
+
+Reasoning:
+This structure isolates domain logic. For example, changes to the Inventory logic 
+do not affect the Authentication module, promoting cleaner code and easier testing.
+
+
+3. MODULE-WISE CODE EXPLANATION
+--------------------------------------------------------------------------------
+
+A. Authentication & User Management
+   - Purpose: Handles user registration, login, and secure token issuance.
+   - Key Files:
+     * AuthController.java: Endpoints for /register and /login.
+     * JwtUtility.java (or JwtService): Generates and validates signed JWTs.
+     * SecurityConfig.java: Configures the security filter chain.
+   - Interaction: Acts as the gatekeeper. All other modules rely on the SecurityContext 
+     established here to identify the "Current User".
+
+B. Medicine Management & Scan
+   - Purpose: Manages the catalog of medicines and handles input scanning.
+   - Key Files:
+     * Medicine.java (Document): MongoDB entity for flexible medicine attributes.
+     * MedicineService.java: CRUD operations for medicines.
+     * ScanService.java: Processes barcode/image inputs (contains mock logic for MVP).
+   - Responsibility: Stores metadata (Name, Dosage, Manufacturer) without tracking quantities.
+
+C. Inventory Management
+   - Purpose: Tracks the *quantity* of specific medicines for a user.
+   - Key Files:
+     * Inventory.java (Entity): MySQL entity ensuring relational integrity.
+     * InventoryLog.java: Audit trail for every stock change.
+     * InventoryService.java: Contains critical business logic (stock decrement, thresholds).
+   - Interaction: Is triggered by the Reminder module when a user marks a medicine as "Thinking".
+
+D. Reminder & History Management
+   - Purpose: Schedules alerts and records intake history.
+   - Key Files:
+     * Reminder.java (Document): MongoDB entity for flexible scheduling options.
+     * ReminderService.java: Handles the complex logic of recording an action (TAKEN/SKIPPED).
+     * ReminderHistory.java: Immutable log of user actions.
+
+
+4. API LAYER EXPLANATION
+--------------------------------------------------------------------------------
+The system uses a RESTful API architecture.
+
+- Controllers (e.g., MedicineController):
+  - Annotated with @RestController.
+  - mapped to specific paths like /api/medicines.
+  - Return ResponseEntity objects containing DTOs (Data Transfer Objects).
+
+- Request-Response Flow:
+  1. Client sends HTTP Request (e.g., POST /api/reminders).
+  2. JwtFilter intercepts request -> validates Token -> sets User Context.
+  3. Controller receives request and validates body (@Valid).
+  4. Service Layer executes business logic (Database calls, calculations).
+  5. Controller returns HTTP Response (200 OK, 400 Bad Request) with JSON data.
+
+- DTO Pattern:
+  We use explicit DTOs (e.g., MedicineRequestDTO) instead of exposing database enitities 
+  directly. This prevents over-posting attacks and hides internal database structures.
+
+
+5. SECURITY IMPLEMENTATION IN CODE
+--------------------------------------------------------------------------------
+Security is implemented using Spring Security 6.
+
+1. Password Hashing:
+   - Located in SecurityConfig.java.
+   - Uses BCryptPasswordEncoder. Passwords are NEVER stored in plain text.
+
+2. JWT Processing:
+   - JwtFilter.java intercepts every request.
+   - It extracts the "Authorization: Bearer <token>" header.
+   - Validates the signature using a secret key.
+   - If valid, it injects the User Details into the Spring Security Context.
+
+3. Authorization:
+   - Controller endpoints use the authenticated context (SecurityContextHolder)
+     to ensure users can only access their own data.
+   - "Stateless" session policy is enforced in SecurityConfig.
+
+4. Data Access Security:
+   - Service methods explicitly check if the resource belongs to the logged-in user 
+     before performing updates or deletes (IDOR protection).
+
+
+6. DATABASE INTERACTION LAYER
+--------------------------------------------------------------------------------
+The project features a Hybrid Database pattern:
+
+1. MySQL (Relational Data):
+   - Used for: Users, Inventory, Inventory Logs.
+   - Why: Requires strict consistency, ACID transactions, and relationship enforcement.
+   - Implementation: Spring Data JPA (@Entity, @Table, JpaRepository).
+
+2. MongoDB (Document Data):
+   - Used for: Medicines, Reminders.
+   - Why: Medical data can vary in structure; Reminders have flexible metadata.
+   - Implementation: Spring Data MongoDB (@Document, MongoRepository).
+
+Data Consistency:
+- The InventoryService uses @Transactional annotations.
+- If an inventory update fails, the associated audit log (InventoryLog) creation is 
+  rolled back instantly, ensuring the database never reaches an invalid state.
+
+
+7. REMINDER AND SCHEDULING LOGIC IN CODE
+--------------------------------------------------------------------------------
+- Scheduler:
+  * Located in NotificationScheduler.java.
+  * Uses @Scheduled(fixedRate = 300000) to run every 5 minutes.
+  * Checks for reminders due in the "next hour" window.
+  * Designed to be battery-efficient (batch processing vs continuous polling).
+
+- Status Handling:
+  * Logic resides in ReminderService.recordAction().
+  * When a user clicks "Take":
+    1. System checks "Idempotency" (Has this been taken in the last hour?).
+    2. Updates Reminder status in MongoDB.
+    3. Triggers Inventory decrement in MySQL.
+
+
+8. INVENTORY LOGIC IN CODE
+--------------------------------------------------------------------------------
+- Initialization:
+  * When adding a medicine, an Inventory record is created with 0 quantity if none exists.
+
+- Decrement Logic (Critical Section):
+  * Located in InventoryService.updateQuantity().
+  * Enforces an INVARIANT: Quantity cannot be negative.
+  * Before saving, it checks: if (newQuantity < 0) throw Exception.
+  * Atomically saves an "InventoryLog" record explaining WHY the change happened 
+    (Reason: CONSUMPTION).
+
+- Low Stock Detection:
+  * LowStockThreshold is a field in the Inventory entity.
+  * The NotificationScheduler checks: if (quantity <= threshold) -> generate Alert.
+
+
+9. ERROR HANDLING AND LOGGING
+--------------------------------------------------------------------------------
+- Global Handling:
+  * Implemented in GlobalExceptionHandler.java (@RestControllerAdvice).
+  * Catches specific exceptions like ResourceNotFoundException or IllegalArgumentException.
+  * Converts stack traces into clean, secure JSON error responses:
+    {
+      "status": 400,
+      "message": "Inventory cannot be negative",
+      "timestamp": "2024-03-20T10:00:00"
+    }
+
+- Logging:
+  * Uses SLF4J (Simple Logging Facade for Java).
+  * Logs at different levels: INFO for business events, ERROR for system failures.
+  * Stack traces are logged server-side but never sent to the client.
+
+
+10. HOW TO ANSWER PANEL QUESTIONS USING THIS CODEBASE
+--------------------------------------------------------------------------------
+
+Q: "What happens exactly when a user logs in?"
+A: "The request hits AuthController. The AuthenticationManager verifies the username 
+   and hashed password against the MySQL database. If valid, the JwtService generates 
+   a signed token containing the user's ID, which is returned to the client for future requests."
+
+Q: "How do you ensure I don't take the same medicine twice by accident?"
+A: "In the ReminderService, existing logic checks the ReminderHistory. If a 'TAKEN' 
+   action exists for this medicine within the last 60 minutes, the system rejects 
+   the new request to prevent double-dosing."
+
+Q: "How is security enforced? Can I access another user's data?"
+A: "No. Every request is intercepted by the JwtFilter which identifies the user. 
+   Additionally, Service methods explicitly compare the resource's owner ID with the 
+   token's user ID before allowing any read/write access. If they don't match, 
+   an Unauthorized exception is thrown."
+
+Q: "Why did you use two databases?"
+A: "We used MySQL for Inventory to ensure strict ACID compliance for stock quantities, 
+   mirroring financial ledger principles. We used MongoDB for Medicines to allow for 
+   flexible schema evolution, as drug data attributes can vary significantly."

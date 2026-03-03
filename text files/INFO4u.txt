@@ -1,0 +1,84 @@
+PROJECT STRUCTURE GUIDE
+=======================
+
+This document explains the "Medicine Management System" in simple terms.
+
+TOP LEVEL FOLDERS
+-----------------
+- backend/: The Brain. Handles logic, data, and security.
+- frontend/: The Face. The app you see and touch.
+- docs/: The Manuals. Guides and help files.
+- scripts/: The Helpers. Shortcuts for running tasks.
+- .github/: The Cloud Settings. Saves code history online.
+
+==================================================
+
+IN-DEPTH: THE FRONTEND (The Face)
+Location: /frontend
+---------------------------------
+This is the mobile/web application users interact with.
+
+1. CORE FILES
+   - App.tsx: The "Main Entrance". This is where the app starts running.
+   - package.json: The "Ingredients List". Lists all the extra software libraries the app needs to work.
+   - tsconfig.json: The "Rulebook". Tells the computer how to read the code (TypeScript rules).
+
+2. THE "SRC" FOLDER (Source Code)
+   - api/: The Phone Book. Contains instructions on how the app talks to the Backend (the brain).
+   - assets/: The Decoration Box. Holds images, icons, and fonts.
+   - components/: The Lego Blocks. Reusable pieces like buttons, headers, and cards that build up the screens.
+   - constants/: The Reference Sheet. Fixed lists of numbers, colors, and names used everywhere.
+   - context/: The Global Memory. Remembers important things like "Is the user logged in?" while you move between screens.
+   - hooks/: The Custom Tools. Special logic helpers reused across different pages.
+   - navigation/: The Map. Decides which screen shows up when you click a button (e.g., going from Login -> Home).
+   - screens/: The Pages. The actual full screens you see, like "Home", "Login", or "Settings".
+   - utils/: The Toolbox. Small helper functions for formatting dates, doing math, or fixing text.
+
+==================================================
+
+IN-DEPTH: THE BACKEND (The Brain)
+Location: /backend
+---------------------------------
+This runs on the server. It saves your data and makes sure everything is correct.
+
+1. CORE FILES
+   - Dockerfile: The Blueprint. Instructions to build the "server computer" securely.
+   - pom.xml: The Backend Ingredients. Lists the Java tools needed to run the server.
+
+2. THE "MODULES" (Inside src/main/java/com/mediscan/...)
+   Each folder here represents a specific job the brain performs:
+
+   - config/: The Control Panel.
+     Sets up security (who can login), database connections (where data lives), and startup rules.
+
+   - user/: The Gatekeeper.
+     Handles signing up, logging in, and managing user profiles.
+
+   - medicine/: The Pharmacist.
+     Manages the database of medicines, their names, dosages, and details.
+
+   - reminder/: The Alarm Clock.
+     Schedules and manages the alerts that tell you when to take your pills.
+
+   - inventory/: The Stock Manager.
+     Tracks how many pills you have left and warns you when to buy more.
+
+   - history/: The Diary.
+     Keeps a log of every action, like when you took a medicine or updated a prescription.
+
+   - group/: The Family Circle.
+     Allows you to manage multiple people (like family members) under one account.
+
+   - scan/: The Eyes.
+     Handles reading information from images (like scanning a pill bottle label).
+
+   - common/: The Shared Tools.
+     General utilities used by all the other modules above.
+
+==================================================
+
+OTHER IMPORTANT FILES
+---------------------
+- docker-compose.yml: The Master Recipe. Runs the Frontend and Backend together.
+- .env.example: The Secret Key Template. Shows where passwords go (safe version).
+- README.md: The Welcome Mat. General project description.

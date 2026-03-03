@@ -1,0 +1,123 @@
+# MediScan - 4-Person Parallel Development Plan
+
+Goal: Ship MVP in 5 working days with zero file conflicts  
+Team Size: 4 developers (including you)  
+Current State: Backend 75% complete, Mobile TBD
+
+---
+
+## Team Structure & Ownership
+
+### Person 1: YOU (Backend Core - Java/Spring)
+Role: Backend Lead & API Owner  
+Duration: 1-2 days to MVP-ready backend
+
+### Person 2: Database & DevOps Engineer
+Role: Data Layer & Infrastructure  
+Duration: Parallel 1-2 days, then deployment support
+
+### Person 3: Mobile Developer (React Native)
+Role: Mobile App Development  
+Duration: 3-5 days (starts after backend API contracts confirmed)
+
+### Person 4: QA & Integration Engineer
+Role: Testing, Documentation, Integration  
+Duration: 5 days (continuous testing as modules complete)
+
+---
+
+## File Ownership Matrix (Zero Conflicts)
+
+| Owner | File Paths | MUST NOT TOUCH |
+|-------|------------|----------------|
+| Person 1 (You) | backend/src/main/java/**/*.java | db/migration/*.sql |
+| | backend/src/main/resources/application*.yml | docker-compose.yml |
+| | | mobile/** |
+| Person 2 | backend/src/main/resources/db/migration/*.sql | backend/src/main/java/** |
+| | docker-compose.yml | mobile/** |
+| | backend/pom.xml (dependencies only) | |
+| | .env* files | |
+| | Cloud deployment configs | |
+| Person 3 | mobile/** (entire React Native app) | backend/** (read-only for API reference) |
+| | mobile/package.json | |
+| Person 4 | tests/** | backend/src/** |
+| | postman/** | mobile/src/** (read-only) |
+| | docs/** | |
+| | README.md | |
+
+---
+
+## Conflict Resolution Rules
+
+### File Conflicts
+- Person 1 NEVER edits .sql files
+- Person 2 NEVER edits .java files
+- Person 3 NEVER edits backend/** files
+- Person 4 ALWAYS uses separate tests/ folder
+
+### API Contract Changes
+- Once Person 1 commits v1 DTOs (Day 1 End):
+- FROZEN - No changes to field names/types
+- If change needed: Create v2, keep v1 intact
+
+### Dependency Changes
+- Only Person 2 modifies:
+- backend/pom.xml (Maven dependencies)
+- mobile/package.json (after Person 3's initial setup)
+
+Process:
+1. Person needs dependency
+2. Request in Slack/Teams
+3. Person 2 adds it
+4. Person 2 commits
+5. Requester pulls
+
+---
+
+## Success Metrics
+
+### Day 1 Target
+- Backend compiles with zero errors
+- Docker starts all services
+- Migrations run successfully
+
+### Day 2 Target
+- All backend endpoints tested in Postman
+- Mobile project initialized
+- Health endpoint responds
+
+### Day 4 Target
+- Mobile APK/IPA built
+- End-to-end flows tested
+- Bug fixes completed
+
+### Day 5 Target
+- Production deployment successful
+- All documentation complete
+- MVP shipped
+
+---
+
+## Critical Path (Must Complete in Order)
+
+1. Day 1: Person 1 fixes Java errors
+2. Day 1: Person 2 creates migrations
+3. Day 1 End: Backend starts successfully
+4. Day 2: Person 3 starts mobile dev
+5. Day 2: Person 4 creates Postman collection
+6. Day 3: Mobile integrates APIs
+7. Day 4: Integration testing
+8. Day 5: Production deployment
+
+---
+
+## Summary
+
+| Person | Focus | Duration | Depends On |
+|--------|-------|----------|------------|
+| 1 (You) | Backend Core (Java) | 1-2 days | None |
+| 2 | Database & DevOps | 1-2 days | None |
+| 3 | Mobile App | 3-5 days | Person 1 (Day 1 end) |
+| 4 | QA & Docs | 5 days (continuous) | All progressively |
+
+Timeline to MVP: 5 working days (with proper coordination)

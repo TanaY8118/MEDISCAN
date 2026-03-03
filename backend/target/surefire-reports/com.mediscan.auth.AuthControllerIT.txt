@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.mediscan.auth.AuthControllerIT
+-------------------------------------------------------------------------------
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 18.42 s -- in com.mediscan.auth.AuthControllerIT
